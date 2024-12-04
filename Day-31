@@ -1,0 +1,214 @@
+Integration of SonarQube with PostgreSQL database :
+instnace -amazonlinux -t2-medium - sonar-amazon(name) - port no -9000
+
+1.Install java 
+  -sudo yum install java-17-amazon-corretto-headless -y
+
+2.Install sonarqube:
+   - wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-24.12.0.100206.zip?_gl=1*1agvz3a*_gcl_au*MTc4Mzk5NTg3MS4xNzMwNzgwNTU0*_ga*Mzk0Mjg2OTcyLjE3MzA3ODA1NTQ.*_ga_9JZ0GZ5TC6*MTczMzI5NDQyMi4xNC4wLjE3MzMyOTQ0MzUuNDcuMC4w
+   - unzip sonar.tar
+   - cd sonarqube-24.12.0.100206                                                                        go to sonarqube folder
+   - ls -lrt                                                                                            we have a conf directory
+   - cd conf/
+   - ls =lrt                                                                                            we have sonar.properties
+   - vi sonar.properties    
+                 give username and password          remove # and add sonar.jdbc.username=sonarqubedb
+                                                                      sonar.jdbc.password=Cloud#436
+                    give url too                                      sonar.jdbc.url=jdbc:postgresql://locaihost/sonarqubedb
+             java is using sonarqube database connectivity to connect to postgresql
+  - cd bin/    
+  - ll
+  - cd linux-x64-64/
+  - ls -lrt
+  - sh sonar.sh start
+  - sh sonar.sh status 
+               when it is not running check the logs
+               go to - cd sonarqube-24.12.0.100206/
+                     - ll
+                     - cd logs/
+                     - ll
+                     - cat es.log           we can see the error
+                                                 here the error os vax memory is too low , increase to atlest [262144]     
+                                                   - sudo sysctl -w vm.max_map_count=262144                                         now start sonar
+    in web     serverip:9000                            sonarwill start
+                                           default username and password is "admin"      create a new password and login
+                     we will connect to sonar by using token automatically 
+                           profile - my-account - security - maven-sonar-token(give-name) - generate-token - copy-and-save
+
+                                                   
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+     
+  in another tab/duplicate tab
+3.PostgreSQL installation :
+
+1. switch to root:     sudo -i
+2. Manually Create the PostgreSQL Repository File Instead of using the package, manually add the PostgreSQL Yum repository:
+          -sudo nano /etc/yum.repos.d/pgdg.repo
+     Add the following content (for PostgreSQL 15, adjust the version if necessary):
+        [pgdg15]
+        name=PostgreSQL 15 for RHEL/CentOS 7 - x86_64
+        baseurl=https://download.postgresql.org/pub/repos/yum/15/redhat/rhel-7-x86_64
+        enabled=1
+        gpgcheck=1
+        gpgkey=https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG
+
+3. Clean Metadata and Install PostgreSQL Clean up any stale repository metadata and install:
+       -sudo dnf clean all
+       -sudo dnf install -y postgresql15 postgresql15-server
+4. To check which it is installed or not use this
+          -dnf list installed | grep postgres
+                          it shows something like this:
+                            postgresql15.x86_64                    15.8-1.amzn2023.0.1                @amazonlinux
+                            postgresql15-private-libs.x86_64       15.8-1.amzn2023.0.1                @amazonlinux
+                            postgresql15-server.x86_64             15.8-1.amzn2023.0.1                @amazonlinux
+
+5. Initialize PostgreSQL Initialize the database cluster:
+      to check location/path                -dnf list installed | grep postgres
+       -/usr/bin/postgresql-setup --initdb
+6. go to this directory which is shown in above command 
+          - cd /var/lib/pgsql/data
+          -pwd
+          - ls-lrt
+7. we need to change the configuration file as shown in below:
+          -vi /var/lib/pgsql/data/pg_hba.conf
+           i will add pic here 
+                        change ident to md5
+
+
+
+
+
+
+8. enable the postgresql servive and start it:
+        - systemctl enable postgresql
+        -systemctl start postgresql
+                              in another tab set the password for postgres:
+                                         -sudo -i
+                                         -passwd postgres
+                                         If you want the postgres user to have sudo access (though it's not recommended for production environments), you can add it to the sudoers file. Run this as the root user:
+                                         -visudo
+                                         - postgres  ALL=(ALL)  NOPASSWD: ALL
+                                               This will allow the postgres user to execute any command with sudo without a password prompt.
+ 
+9.Creating database 
+          Login into Database:                                                                                  
+            - sudo -u postgres psql                                                                                
+                to create database
+                        -  create database sonarqubedb;
+                Create the sonarqube DB user with a strongly encrypted password
+                         -  create user sonarqube with encrypted password 'Cloud#436';
+                 Next, grant all privileges to sonrqube user on sonarqubedb;
+                          -   grant all privileges on database sonarqubedb to sonarqube
+                                 -  \c sonarqubedb                 this will show details
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+ CI PROCESS :
+    Integrate sonar maven plugin and sonar token and run the mvn sonar:sonar command                                                                                        
+     instance - RHEL - t2-micro - ci-process(name) - connect
+ install java git maven and then integrate with sonar
+ 1.install git:
+     -   sudo yum install git -y                                       we are in ec2-user
+ 2.install java :
+     -  sudo yum install java-21-openjdk-devel -y
+ 3.install maven :
+             -sudo yum install wget -y                       if necessary
+                                                                                            
+     -  wget https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz
+       - sudo tar xzvf apache-maven-3.9.9-bin.tar.gz
+   -  /home/ec2-user/apache-maven-3.9.9/bin/mvn --version
+     if we dont want to use thsi complete path always then do this 
+            - vi .bashrc           add at the end ; export PATH=$PATH:/home/ec2-user/apache-maven-3.9.9/bin
+            - source .bashrc                                                                                           
+  4.checkout code and mvn clean package and mvn clean install
+      - git clone  https://github.com/cloudtechmasters/springboot-maven-course-micro-svc.git
+        we have to run mvn clean install from the directory where the pom.xml file is present.  to check use this
+                   - find /home/ec2-user/ -name pom.xml                                                                         
+                                     [ec2-user@ip-172-31-15-78 ~]$ find /home/ec2-user/ -name pom.xml
+                                        /home/ec2-user/springboot-maven-course-micro-svc/pom.xml
+                                      [ec2-user@ip-172-31-15-78 ~]$ cd springboot-maven-course-micro-svc
+                                         [ec2-user@ip-172-31-15-78 springboot-maven-course-micro-svc]$ mvn clean package
+  5.maven-sonar-plugin :
+      -  vi pom.xml
+               add this in the plugins along with springboot plugin      
+                                  <plugin>
+                                     <groupId>org.sonarsource.scanner.maven</groupId>
+                                      <artifactId>sonar-maven-plugin</artifactId>
+                                      <version>5.0.0.4389</version>
+                                  </plugin>                                                          
+
+      - mvn clean package 
+      - mvn sonar:sonar -Dsonar.host.url=http://ipadress:9000/ Dsonar.login=sonar-maven-token
+                  this project we can see in sonarui   - projetcs - project is passed
+              now let say developer has not followed best practices with respect to coding standards, this will make project code analysis failed here our work is  -
+                           as a devops enginner , our responsibility is to update the status                                                                   
+                                            if the status is passed - we will proceed and go ahead and upload in nexus                                                
+                                            if the status is failed - we dont do anything
+                                                                                            
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+If  the sonarqube code analysis is PASSED 
+  we can upload that jar file to any places. it can be 
+           1. Nexux
+           2. Amazon s3
+           3. docker image
+           4. jforg
+
+
+1. Nexus :
+     instance - Ubuntu - t2-meduim - port- 8081 - nexus(name)                                                                                       
+   - sudo apt update
+     Download java                                                                                        
+   - sudo apt install openjdk-17-jdk openjdk-17-jre -y
+     Download nexus
+   - sudo wget -O nexus.tar.gz https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+   - sudo tar -xvf nexus.tar.gz
+   - ll
+   - cd nexus-3.75.0-06/
+   - ll
+   - cd bin/
+   - ll
+   - pwd                                                                                         
+   - ./nexus start
+   - ./nexus status
+   - jps                          
+      connect it with web         ipaddress:8081
+      click on signin - username=admin - password will get in server by suing that path - create new password - diable ananoymous access - no-not interested - finish
+         wheel-icon - repositories -                                                                                    
+                                    check the pom.xml file weather it is SNAPSHOT or release based on that copy the link from this 
+    now we need to deploy SNAPSHOT jar file to nexus -
+            add this in pom.xml after the parent tag
+                                                                                            
+                <distributionManagement>
+                   <snapshotRepository>
+                       <id>nexus-snapshots</id>
+                             <url>http://localhost:8081/nexus/content/repositories/snapshots</url>                replace this with our url ipaddress:8081/repositiry/maven-snapshots
+                   </snapshotRepository>
+             </distributionManagement>                                                                            
+              
+    we need to inform apache maven about username and password of necxus server
+    while adding this we need to make sure    <id>nexus-snapshots</id>   is same in maven settings.xml id as well
+                                                                                            
+***********   we need to do this in the ci-process server   ***************
+
+in ec2-user  
+   - cd apache-maven-3.9.9/conf/                                                                                         
+   - pwd
+   - ls -lrt
+   - vi settings.xml         
+                      we need to add an entry in server section --- before server section closing add 
+                                      <server>
+                                         <id>nexus-snapshots</id>                                                   
+                                         <username>admin</username>                                                  
+                                         <password>Qwerty@**</passwoed>
+                                      </server>
+ go back to the maven project 
+  - cd /home/ec2-user/springboot-maven-course-micro-svc
+  - mvn deploy      
+        
+ our jar file will come in sonartype-nexus-repository - browse- maven-snapshots - we can see jar file
+                                                                                            
+
+  
