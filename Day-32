@@ -1,0 +1,61 @@
+We want to make nexus as https with nginx and certbot
+  nexus.something.com        ---we should have to make this work . to do this we need
+                               1. we need a Domain
+                                    we can get the domain from goDaddy of namecheap ot other hosting websites
+                                     
+                               2. for https we nned to get certificates
+
+
+  create a instance - ubuntu - t2-meduim - port= http-80 , https-443 , 8081 
+   switch to root 
+  1.install java :
+      - sudo apt install openjdk-17-jre-headless -y
+  2.install nginx :
+      - apt install nginx -y
+  3.install nexus :
+      - cd /opt
+      -  sudo wget -O nexus.tar.gz https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+      -  sudo tar -xvf nexus.tar.gz
+  it is not recommmanded to run nexus with root user , change the ownership
+      - sudo useradd -d /home/nexus -s "/bin/bash" -c "comment" -m nexus
+      -  sudo chown -R nexus:nexus nexus-3.75.0-06/ sonatype-work/
+      - ls -lrt
+    we need to add nexus user in sudoers file as well
+     - visudo
+        add " nexus    ALL=(ALL)      NOPASSWD: ALL "
+     -  cd nexus-3.75.0-06/bin/
+     - ll
+     - vi nexus.rc
+               change to this    "run_as_user="nexus"
+     - ./nexus start
+     - /opt/nexus-3.75.0-06/bin/nexus status 
+
+      now we need to link this server=ip with domain
+        aws -services - Route-53 - hosted zones - create hostedzone - myownproject.xyz(my domain) - create - after doing name changes - create a Record - add ec2-instance-ip in value - create record
+              change the name of this name-servers in godaddy    --ns-1467.awsdns-55.org.
+                                                                   ns-11.awsdns-01.com.
+                                                                   ns-651.awsdns-17.net.ns-1574.awsdns-04.co.uk.
+              copy those -  open godaddy - profile - my products - right click your domain - manage DNS - nameserver - change - delete the existing  - add the new one
+        in web domainname:8081             -     myownproject.xyz:8081     
+
+        it works with http and we need explicity mention port
+          http://myownproject.xyz    - it should load without mentioning port
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+        
