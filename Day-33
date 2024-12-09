@@ -1,0 +1,51 @@
+1.how to clone gradle project from github 
+2.build it
+3.how to integrate gradle project with sonarqube
+
+if we want to build java prpject then we can go with 
+   1. Apache ant
+   2. Apache maven 
+   3. gradle 
+      apache ant is very old version
+      maven is used for small projects 
+      Gradle is used for larger projects and gradle is many times like 85 times faster than maven
+  for android projects also gradle is used
+
+1.how to clone gradle project from github
+
+--go to any of the directory in windows - go to working space - right click open git-bash - 
+   - git clone https://github.com/AishwaryaK515/spring-boot-gradle-demo.git
+   -  cd spring-boot-gradle-demo
+   - ls -lrt
+   for maven project we will have pom.xml (project-object-model)
+   for gradle project we will have build.gardle
+  - git checkout master                           go to the place where build.gradle will br there
+  - ll
+    
+2.how to build gradle project
+
+  we have to use gradle command    -- gradle clean build  
+  we have to make sure whats is the java version used on the gradle project based on that we have to set java version before build or else we can update java version in gradle project
+
+  Q. where are our artifacts stored in case of  mavnen project?
+  A. - In maven project our Artifacts will be stored under target directory of project
+     - In Gradle project our Artifacts will be stored under build/libs directory
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
