@@ -3,7 +3,7 @@ instnace -amazonlinux -t2-medium - sonar-amazon(name) - port no -9000
 
 1.Install java 
   -sudo yum install java-17-amazon-corretto-headless -y
-
+ 
 2.Install sonarqube:
    - wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-24.12.0.100206.zip?_gl=1*1agvz3a*_gcl_au*MTc4Mzk5NTg3MS4xNzMwNzgwNTU0*_ga*Mzk0Mjg2OTcyLjE3MzA3ODA1NTQ.*_ga_9JZ0GZ5TC6*MTczMzI5NDQyMi4xNC4wLjE3MzMyOTQ0MzUuNDcuMC4w
    - unzip sonar.tar
