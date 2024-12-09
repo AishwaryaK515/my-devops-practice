@@ -1,0 +1,153 @@
+Gradle sonarqube integration 
+gradle war file deployment to apache tomcat
+
+Q. who will create the gradle project ?
+Q. what should be devops engineer role during build and release ?
+
+A: developer will create the project and keep it in version control system
+  1.github
+  2.bit bucket
+
+MICRO-SERVIVES-BASED-PROJECTS :
+-------------------------------
+    previously we have traditional monolithic applications :
+    for example : 
+       1. registration and login 
+       2. cart related actions
+       3. tracking the products which we have purchased
+       4. messaging system
+          otp
+          sms
+          emails 
+      if in case there is any issue with any of this flows we need to redeploy everything
+    instead of this micro services architecture came into picture
+    application got moved from monolithic to micro service based
+
+   each and every functionality will be segregated
+       1. registarion micro services
+       2.cart micro services
+       3.tracking micro services
+       4.messaging micro services
+---------------------------------------------
+   micro servives can be created by 
+      java framework
+      dotnet
+      other programmimg languages
+
+if it is a java related then framewoek is spring-boot
+-------------------------------------------
+as a devoloper everyone will use springboot for creating micro services
+springboot project can be build using apache maven and gradle
+now we will try to create project using gradle
+
+
+GRADLE PROJECT :
+----------------
+we can craete gradle project from --
+   - command line
+   - ide tool 
+   - spring initiazer website                   ---we are using this
+           select gradle project -  add dependencies - select jar - create project - extract the zip file in somelocation (SETUP) - OPEN  gitbash there
+           - gradle clean build
+           - ls -lrt build/libs  
+---------------------------------------------------------------------------------------------
+
+my next process is "  I want to integrate my project with sonarqube"
+----------------------------------- go to where project is located -  C:\SETUP\demo\demo  -- open build - add this in top
+
+buildscript {
+    ext {
+        springBootVersion = '1.5.4.RELEASE'
+		jacocoVersion = '0.8.7'
+    }
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7.1"
+    }
+}
+
+
+ ------------------------ add this after plugins before group version capabilities   
+apply plugin: 'org.sonarqube'
+apply plugin: 'jacoco'
+
+---------------------------- add this after test
+
+jacoco{
+  toolVersion = "${jacocoVersion}"
+}
+
+jacocoTestReport {
+ reports{
+  html.enabled=true
+  xml.enabled=true
+  csv.enabled=true
+ }
+}
+
+
+sonarqube {
+  properties {
+    property "sonar.projectName","SpringBoot Code Coverage Demo"
+property "sonar.exclusions", "**/generated-*/**/*"
+    property "sonar.projectKey", "org.sonarqubeJacocoCodeCoverage"
+    property "sonar.reportPath" , "${project.buildDir}/jacoco/test.exec"
+	property "sonar.host.url", "http://54.237.36.153:9000"
+    property "sonar.sources", "src/main/java"
+    property "sonar.tests", "src/test/java"
+	property "sonar.login", "admin"
+	property "sonar.password", "admin123"
+  }
+}
+
+
+
+tasks['sonarqube'].dependsOn test
+
+i need a working sonarqube 
+----------------------------------------------
+create ec2 instance and install sonarqube :
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
