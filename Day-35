@@ -1,0 +1,79 @@
+What is Ansible
+why do we need Ansible
+How to install and start with basic steps 
+
+
+Ansible is an open source IT configuration management , deployment and orchestration tool
+it aims to provide large productivity gains to a variety of automation challenges
+
+***   if u want to automate complex multi tier IT application environments we can use ansible
+
+before ansible
+   previously system administrator manages server by hand then installing software , chamging configurations and administring servives on individual server
+  - now adays , data centre is growing and hosted applications became more complx
+  - then administartors realized/decided they couldnt scale their manual system
+  - it will also impact the work of developers since the development team was agile and releaisng software frequently  , but it operations are spending more time configuring  the system
+  - for example :
+     develop got a work that they have to create a java microservice with gradle and deploy that 
+     devops engineer: has to create environments like
+                     development env , QA env  , UAT/staging env  , production env 
+           in all the places , he has to make sure all the required configurations are there for server
+           if he fails to do that, the entire work of developers will be impacted because the software releaeses will go very frequently and there will br continous deployment 
+
+besically we have to focus on 
+1. server provisioning
+2. configuration management
+
+Ansible terminology :
+controller machine
+inventry
+playbook
+task
+module
+role
+play
+facts
+handlers
+
+1. controller machine:
+    A Machine where ansible installed , responsible for running the provisioning(creation of something) on the server ypu are managing
+    controller machine is a place where we install Ansible and from it we will try to run something on this 2 machines and if we want to manage this 2 servers , we run those scripts or we provision what ever we
+          want to do on the server from the controller machine 
+       example:
+              let say we want to manage 2 server like amazon or RHEL or Ubuntu
+              server1 - install ansible - manage server2 or server 3......
+
+
+
+
+
+
+             
+     
+ 
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
