@@ -6,6 +6,8 @@ How to install and start with basic steps
 Ansible is an open source IT configuration management , deployment and orchestration tool
 it aims to provide large productivity gains to a variety of automation challenges
 
+(ansible will try to connect to the nodes/servers using SSH concept and it performs the installation automatically)
+
 ***   if u want to automate complex multi tier IT application environments we can use ansible
 
 before ansible
@@ -40,8 +42,196 @@ handlers
     controller machine is a place where we install Ansible and from it we will try to run something on this 2 machines and if we want to manage this 2 servers , we run those scripts or we provision what ever we
           want to do on the server from the controller machine 
        example:
-              let say we want to manage 2 server like amazon or RHEL or Ubuntu
+             - let say we want to manage 2 server like amazon or RHEL or Ubuntu
               server1 - install ansible - manage server2 or server 3......
+            -  if i want to install git and java on both the servers , in that case in Controller machine we can write a script which will do the provision  process
+                  on the servers which iam trying to manage
+provisioning - it is the process of setting up IT infrastructure
+
+2. Inventery:
+      a file that contains the information about the servers that we are managing                    (server 2 or server 3 or .... they are inventrery files)
+
+3. Playbook :
+      it is a entry point for ansible provisiong where automation is defined through tasks using yml format
+
+4. Task :
+      a block that defines a single procedure to be executed         (install a package , create a file ...)
+
+** technically PLAYBOOK will be  having TASKS 
+   PLAYBOOK will be executed aganist the INVENTERY FILE
+   all these will be running from CONTROLLER MACHINE
+
+ BASIC SETUP :
+  we will create 3 machines 
+  we will try to install git and java on the other two  machines using ansible playbook
+
+ create 3 instances - controller-machine
+                    - server-1
+                    - server-2
+
+ ------- controller-machine ----------------
+
+- download ansible :
+   1.    install ansible on controller machine and make sure python is there already
+      - sudo dnf install ansible -y    
+       - ansible --version
+            serach for python 
+                -  python3 --version
+                -  find / -name python 
+
+   2.   now we want to create inventery file :
+     default inventery file  will be in    - ll /etc/ansible/hosts 
+     Recreate Missing Inventory File: If the default inventory file (/etc/ansible/hosts) is missing, recreate it as follows:
+       - sudo mkdir -p /etc/ansible
+       - sudo touch /etc/ansible/hosts
+       - sudo chmod 644 /etc/ansible/hosts
+    Add this content for a basic test :
+       - vi etc/ansible/hosts
+             add this        - [all]
+                               localhost ansible_connection=local
+    Run a Simple Test: Test Ansible with the inventory file:
+       - ansible all -m ping
+    add servers ips
+       - vi  /etc/ansible/hosts
+         [servers]
+          server1 ip address
+          server2 ip address
+       - cat /etc/ansible/hosts
+
+ 3. generate ssh key on controller machine and copy this key to all the server which u want to manage to the authorized keys file
+   - ssh-keygen               (u have generate this key only on the controller machine)
+               copy this key  " Your public key has been saved in /root/.ssh/id_rsa.pub "
+
+   - sudo hostnamectl set-hostname controller-machine
+   - sudo -i
+   - cat /root/.ssh/id_rsa.pub 
+  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDcMFyfnXdjFNlSu4MVlFFVY3vbOxEeAPHNNSCF1k+9Ij/8zrJSHtAmHqm7BYocEQxE1S92psbgiOlwRc4IW3TZgkEbkI6LtxnnlWUMGZDf80DaILh+4JgWym4J2+C2yD6QlPmpHNok2ojjt+YLaweNA9y8Tus5QjdA5A8FSeJfNOPQYTE15lmeIMpZw523Za8yQE1yie5XtTcdK3wCERLTnNHYNN55vsa6Xr6UHBi+LDIFT1MbmIHw9kmW6lS/k2X9rjA8ENECYMwqGF5UsihHFAbNYOrMMWQLENh5hppAKgdQ3wJY8cuKbApnSog4l9NZt7V1DPRRtl2p2BiJcqoteiC/wS46wMx8wNj4XtCohuWXTYFhajdr8C5wu8cKKpChW8mjGORtkIbBfSdHjYuP2R1ie3cpMtpvFMfnU2/ea65OvxMI53Z35q6UHdn8qhpVRPCJHtrGY0/54dsF+mHOhSSVbRO8yNRX3LaE9sNSUhJgWdYmazcHX/sWBR+iz7s= root@ip-172-31-11-239.ap-south-1.compute.internal
+   
+   after adding key in server 1 and server 2
+   - ansible -m ping localhost
+    - ansible -m ping servers
+
+--  if i want to install packages using ansible
+  for installimg the packages we can use commamd module or yum module if it is rhel or apt module if it is ubuntu
+   - name: install the latest version of apache
+     yum :
+         name:httpd
+        state:latest
+  (   ansible [pattern] -m [module] -a '[module option]'   )
+      - ansible servers -m yum -a 'name=git state=latest'
+
+      - ansible servers -m yum -a 'name=java-17-amazon-corretto-devel state=latest'
+
+      to create a file :
+      - ansible servers -m file -a 'path=/root/sample.txt state=touch mode=0777'
+      to remove a file :
+      - - ansible servers -m file -a 'path=/root/sample.txt state=absent mode=0777'
+      to create a  directory :
+      - ansible servers -m file -a 'path=/root/sample.dir state=directory mode=0777' 
+      to remove directory :
+      - ansible servers -m file -a 'path=/root/sample.dir state=absent mode=0777'
+      to check file/directory is exist or not :
+      - ansible servers -m stat -a 'path=/root/sample.txt'
+      to create userc:
+      - ansible servers -m user -a 'name=tomcat10 uid=1324'
+      - ll /home/
+      to delete user :
+      - ansible servers -m user -a 'name=absent uid=1324'            (only user deleted )
+      to create group :
+      - ansible servers -m group -a 'name=devops state=present'
+      - cat /etc/group | grep devops
+      to delete group :
+      - ansible servers -m group -a 'name=devops state=absent'
+
+      i want to download apache maven and extract apache maven :
+      wget https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz
+      tar xvf apache-maven-3.9.9-bin.tar.gz
+
+      we have to use get_url and unarcheive modules
+      - ansible servers -m get_url -a 'url=https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz dest=/opt mode=0777'
+      to remove tar file
+      - ansible servers -m file -a 'path=/opt/apache-maven-3.9.9-bin.tar.gz state=absent'
+      to extract
+      - ansible servers =m unarchive -a 'src=/opt/apache-maven-3.9.9-bin.tar.gz dest=/opt remote_src=yes'
+      to create ec2 instance :
+       download this
+        python >= 3.6
+        boto3 >= 1.28.0
+        botocore >= 1.31.
+       - yum install python3-pip -y
+       - pip install boto
+        create a iam user - give ec2fullacess permission - copy accesskey and secret key
+
+       - aws configure 
+         give all key
+       - cat .aws/credentials
+        copy ami id
+       - ansible localhost -m ec2 -a 'key_name=jit-jenkins-key instance_type=t2.micro image=ami id '
+       - export AWS_REGION='us-east-1'
+        to remove instance :
+       - ansible localhost -m ec2 -a 'instance_ids= instance id state=absent'
+
+
+
+-------------  server 1 ----------- 
+ - sudo -i
+ - cd /root/.ssh/
+ - ll
+ - vi authorised_keys
+    add key here from controller machine
+ - pwd 
+
+
+
+-----------------server 2 --------------
+- sudo -i
+ - cd /root/.ssh/
+ - ll
+ - vi authorised_keys
+    add key here from controller machine
+ - pwd 
+
+
+
+--------------------------------------------------------------------------------
+
+we can use 
+- ansible adhoc commands
+- ansible playbook
+
+  ansible adhoc commands :
+
+ad hoc commands are great for tasks you repeat rarely.
+For example, if you want to power off all the machines in your lab for Christmas vacation, you could execute a quick one-liner in Ansible without writing a playbook.
+
+command  :  $ ansible [pattern] -m [module] -a "[module options]"
+
+Why use ad hoc commands?
+-Rebooting servers
+-Managing packages
+-Managing services
+-Gathering facts
+-Check mode
+-Patterns and ad-hoc commands
+-Managing files :
+     we can create a file and delete a file
+     we can create a directory and delete a directory
+     we can chnage file permissions as well 
+                          we have to use file module :
+                                          - name: Touch the same file, but add/remove some permissions
+                                               ansible.builtin.file:
+                                               path: /etc/foo.conf
+                                               state: touch
+                                               mode: u+rw,g-wx,o-rwx
+            - ansible servers -m file -a 'path=/root/sample.txt state=touch mode=0777'
+            - ansible servers -m file -a 'path=/root/sample.dir state=directory mode=0777'
+            - ansible servers -m file -a 'path=/root/sample.txt state=absent mode=0777'
+
+--Managing users and groups :
+  - ansible servers -m user -a 'name=tomcat10 uid=1324'
+  - ansible servers -m group -a 'name=devops state=present'
+
+
 
 
 
