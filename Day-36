@@ -1,0 +1,160 @@
+Ansible Playbook
+html - hyertext marrkup language
+yaml - yet another markup language
+
+ - create a instance and connect to the server
+ - dnf install ansible -y
+ - ansible --version
+ - ansible -m ping localhost
+ we have create playbook now
+to install git :
+ - vi install-git.yaml
+add this
+---
+- name: playbook to install git
+  hosts: localhost
+  tasks:
+     - name: install git on thr control machine
+       yum:
+           name: git
+           state: latest
+to check playbook
+- ansible-playbook --systax-check install-git.yaml
+if no errors now install ansible playbook
+ - ansible-playbook install-git.yaml
+
+to install java :
+
+- vi install-java.yaml
+  ahh this 
+---
+- name: playbook to install java
+  hosts: localhost
+  tasks:
+    - name: install java
+      yum:
+        name: java-17-amazon-corretto-devel
+        state: latest
+
+- ansible-playbook --syntax-check install-java.yaml
+- ansible-playbook install-java.yaml
+- java --version
+
+to install maven :
+
+- vi download-maven.yaml
+ ---
+ - name: playbook to download apache maven
+   hosts: localhost
+   tasks:
+     - name: download apache maven
+       get_url:
+         url: https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz
+         dest: /opt
+         mode: '0777'
+
+- ansible-playbook --syntax-check download-maven.yaml
+- ansible-playbook download-maven.yaml
+- ll /opt/
+to extract :
+---
+ - name: playbook to download apache maven
+   hosts: localhost
+   tasks:
+     - name: download apache maven
+       get_url:
+         url: https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz
+         dest: /opt
+         mode: '0777'
+     - name: extract tar file
+       unarchive:
+         src: /opt/apache-maven-3.9.9-bin.tar.gz
+         dest: /opt
+         remote_src: yes
+- ll/opt/
+
+ to delete tar file :
+
+- vi download-maven.yaml
+---
+ - name: playbook to download apache maven
+   hosts: localhost
+   tasks:
+     - name: download apache maven
+       get_url:
+         url: https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz
+         dest: /opt
+         mode: '0777'
+     - name: extract tar file
+       unarchive:
+         src: /opt/apache-maven-3.9.9-bin.tar.gz
+         dest: /opt
+         remote_src: yes
+     - name: delete file
+       file:
+        path: /opt/apache-maven-3.9.9-bin.tar.gz
+        state: absent
+- ll /opt/
+
+
+from the machine where ansible is installed i want to install java on another machine using this setup
+ take ubuntu server
+ from amazonlinux machine i want to install java on ubuntu machine
+
+1. Generate ssh key on amazon linux machine where ansible is installed
+    Your public key has been saved in /root/.ssh/id_rsa.pub
+    - cat /root/.ssh/id_rsa.pub
+    copy the ssh key and paste it under authorized_keys of ubuntu machine 
+ubuntu:
+ - cd .ssh/
+ - ll
+ - vi authorized_key    (paste the keys)
+ ec2 :
+- vi servers   (add ubuntu ip address)
+- ansible -m ping servers             (if it doesnt work)
+- vi /etc/ansible/hosts               (add [servers]
+                                           ununtu server ip  )
+- ansible -m ping servers
+install java on ubuntu machine
+- vi install-java-on-ubuntu.yaml
+add this -
+---
+ - name: playbook for installing java on ubuntu machine
+   hosts: servers
+   tasks:
+     - name: update apt package manager repository cache
+       apt:
+         update_cache: yes
+     - name: install java on ubuntu machine
+       apt:
+         name: openjdk-17-jdk
+         state: latest
+- ansible-playbook --syntax-check install-java-on-ubuntu.yaml
+- ansible-playbook install-java-on-ubuntu.yaml
+check in ubuntu server   - java --version
+
+
+-----------------------------------------------------------------
+
+ansible can be installed on ubuntu machine
+from this ansible machine we can run our playbooks on amazon linux and rhel
+samw process
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
