@@ -26,7 +26,7 @@ if no errors now install ansible playbook
 to install java :
 
 - vi install-java.yaml
-  ahh this 
+  add this in file
 ---
 - name: playbook to install java
   hosts: localhost
