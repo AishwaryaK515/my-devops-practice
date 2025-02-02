@@ -2,7 +2,7 @@
 nexus username and password i want to keep in aws secret manager
 and use them in ansible playbook to download a jar filr from nexus repository
 use case1 - i want to download a jar file from nexus repository for that i have to pass username and password 
-           i dont want to pass the playin username and password 
+           i dont want to pass the playin username and password  
            i want to keep the credentials in aws secret manager and then i want to read it from there 
 
                               or else
