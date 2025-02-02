@@ -1,0 +1,161 @@
+1. I want to store my nexus details in aws secret manager
+nexus username and password i want to keep in aws secret manager
+and use them in ansible playbook to download a jar filr from nexus repository
+use case1 - i want to download a jar file from nexus repository for that i have to pass username and password 
+           i dont want to pass the playin username and password 
+           i want to keep the credentials in aws secret manager and then i want to read it from there 
+
+                              or else
+
+2. i want to download a ajar file from maven central repository which may not need authentication
+
+           i want to connect database ( mysql , postgresql, sql server or oracle )
+           i want to connect to them throught java project  
+                   in order to connect to database from the java project , we need to download the jar file, that jar file can be downloaded from maven central
+                                                     https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/9.2.0/mysql-connector-j-9.2.0.jar
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+to download anything from mvnrepository.com no need to pass username and password
+but if we storing our artifacts in our nexus server with username and password also when u want to upload and download , we want to mention username and password
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+1. if we want to download from nexus we need username and password 
+   we should not hard code username and password in the playbooks
+   we have to store username and password in aws secret manager and from ansible playbook we need to connect to aws secret manager
+   aws - secret manager - give key/valuse - secretname/discription - store 
+   aws - iam - create role- give permission for secrtemanagerreadandwrite - rolename: ec2-role-for-secret-manager - create role
+   attach this role to ec2-instance - select the instance - actions - security - modify iam role - select ec2-role-for-secret-manager - save 
+   requirments to access aws sceret manager we need boto3
+   in server 
+- sudo pip3 install boto3 or boto4 and botocore
+- vi get-aws-secret.yml
+
+---
+- hosts: localhost
+  become: true
+  tasks:
+    - name: read access
+      debug: msg="{{ lookup('aws_secret' , 'prod/appbeta/nexus' , nypath=true , region='us-est-1') }}"
+if we want only userneme then                     debug: msg="{{ lookup('aws_secret' , 'prod/appbeta/nexus' , nypath=true , region='us-east-1') | json_query('nexususername') }}" 
+
+- ansible-playbook get-aws-secret.yml
+ ---------------another way----------\
+if we want only userneme then
+-vi print-json-data.yml
+---
+- hosts: localhost
+  vars:
+    awsjsondata: {   "nexususername": "aish",   "nexuspassword": 'Qwerty@123'   }
+  tasks:
+    - name: get nexususername
+      set_fact:
+         username: "{{  awsjsondata | json_quert('nexususername')  }}"
+    - name: print username
+      debug: 
+      msg: "{{ username }}"
+- ansible-playbook print-json-data.yml
+
+
+
+
+
+
+
+
+
+2. connect to the server ( ubuntu )
+
+- sudo apt update -y
+- sudo apt install ansible -y          (  to install a package )
+- vi download-jar-using-get-url.yml
+     add   ---
+           - name: playbook to download a jar file
+             host: localhost
+             become: yes
+             tasks:
+              - name: download jar file
+                get_url:
+                  url: https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/9.2.0/mysql-connector-j-9.2.0.jar
+                  dest: /opt
+                  mode: '0755'
+
+- ansible-playbook download-jar-using-get-url.yml
+we want to add a check before downloading , check this file is already there or not
+- vi download-jar-using-get-url.yml
+ ---
+- name: playbook to download a jar file
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: check jar file exists or not
+      stat:
+        path: /opt/mysql-connector-j-9.2.0.jar
+      register: jar_output
+    - name: print jar-file-existance-output
+      debug:
+        msg: "{{ jar_output }}"
+    - name: download jar file
+      get_url:
+        url: https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/9.2.0/mysql-connector-j-9.2.0.jar
+        dest: /opt
+        mode: '0755'
+        when: not jar_output.stat.exists
+- sudo ls- lrt /opt
+                                     (we dont use this for maven)
+even though this works , specific to maven repositories we have different module  
+            google - ansible maven repository (module name - maven_artifact)
+                          maven_artifact -  artifact can be jar or war. 
+                                            artifact can be downloaded for maven repository or can be downloaded for nexus repository
+                                         - in order to use this module we want to install 
+                                           lxml
+                                           boto if using s3 repository
+install lxml
+- sudo apt install python3-pip -y                                 _(first we need to install pip then i can download lxml module . once lxml package id there then we can use maven_artifact module)
+- sudo pip3 install lxml          -       sudo apt update                     sudo apt install python3-lxml
+let create a playbook
+- vi download-from-mavne-central.yml
+---
+- hosts: host
+  become: yes
+  tasks:
+    - name: download maven artifact
+      maven_artifact:
+        group_id: com.mysql
+        artifact_id: mysql-connector-j
+        version: 8.0.33
+        repository_url: 'https://repo.maven.apache.org/maven2/'                google- maven2 repository https   - central repository - copy the url
+        dest: /opt
+- ansible-playbook download-from-mavne-central.yml
+- sudo ls -lrt /opt                                                                ( as it is maven repository , no need of using get_url separately)                                                 
+
+----------using artifact the no need to give get_url---------------------------
+
+
+
+
+
+
+                                          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
