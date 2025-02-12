@@ -1,0 +1,201 @@
+Installation of tomcat using ansible playbook 
+
+how to create a service for tomcat and start tomcat as a service 
+1. we need to make sure java8 or java11 is already installed before processing with tomcat , if it is already there we willl skip it , if not we will install it
+2. Download tomcat tar.gz if tomcat folder is already not there
+3. extract the tar file
+4. create decicated tomcat user and changed the ownership
+5. create the tomcat service file under /etc/system.d/tomcat10.services
+6. reload the system after adding the service file
+7. start the tomcat service
+
+
+1.
+- sudo yum install -y ansible
+- ansible --version
+-  ansible -m ping localhost
+-  yum list
+-  yum list java
+-  yum list ssh
+-  yum list wget
+
+- vi install-tomcat10-rhel-os.yml
+
+---
+- hosts: localhost
+  tasks:
+    - name: check java package is already installed or not
+      yum:
+        list: java-11-amazon-corretto-headless
+      register: java11_check_output
+    - name: print java11_check_output
+      debug:
+        msg: "{{  java11_check_output }}"
+add later
+    - name: install java11 package if is not there already
+      yum:
+       name: java-11-amazon-corretto-headless
+       state: present
+      when: java11_check_output.results | selectattr("yumstate", "match", "installed") | list | length == 0
+ 
+
+- ansible-playbook install-tomcat10-rhel-os.yml
+
+
+2.   tomcat10 download link  ---- https://downloads.apache.org/tomcat/tomcat-10/v10.1.34/bin/apache-tomcat-10.1.34.tar.gz
+add this playbook:
+- name: check tomcat10 directory is already present or not
+  stat:
+    path: /opt/apache-tomcat-10.1.34
+  register: tomcat10_check_output
+- name: download apache tomcat10 tar.gz
+  get_url:
+    url: https://downloads.apache.org/tomcat/tomcat-10/v10.1.34/bin/apache-tomcat-10.1.34.tar.gz
+    dest: /opt
+    mode: '0755'
+  when: not tomcat10_check_output.stat.exists
+
+3.
+- name: extracts apache tomcat10 tar
+  unarchive:
+    src: /opt/apache-tomcat-10.1.34.tar.gz
+    dest: /opt
+    remote_src: yes
+
+4.
+i dont want to run tomcat as a root user , i want to run its as own user. thats why i want to create a user for tomcat and i want to change the ownership of the tomcat folder
+ - name: create tomcat10 user
+      user:
+        name: tomcat10
+    - name: change ownership from root to tomcat10 user for apache tomcat10 directory
+      file:
+        path: /opt/apache-tomcat-10.1.34
+        owner: tomcat10
+        group: tomcat10
+        state: directory
+        recurse: yes
+        mode: '0755'
+- ansible-playbook install-tomcat10-rhel-os.yml   
+- ll/opt/               check the ownmer
+- getfacl /opt/apache-tomcat-10.1.34                                                                                                       check later at 35:00 to avoid of update on tomcat
+
+5.
+i want to run tomcat as a service
+- find / -name java
+    we will get this  ---- /usr/lib/jvm/java-11-amazon-corretto.x86_64/bin/java
+add in tomcat file
+ vars:
+    tomcat_user: tomcat10
+    tomcat_directory: /opt/apache-tomcat-10.1.34
+     owner: "{{ tomcat_user }}"
+     group: "{{ tomcat_user }}"
+--------------------------------------------------------------------------------------------
+---
+- hosts: localhost
+  vars:
+    tomcat_user: tomcat10
+    tomcat_directory: /opt/apache-tomcat-10.1.34
+  tasks:
+    - name: check java package is already installed or not
+      yum:
+        list: java-11-amazon-corretto-headless
+      register: java11_check_output
+    - name: print java11_check_output
+      debug:
+        msg: "{{  java11_check_output }}"
+    - name: install java11 package if is not there already
+      yum:
+       name: java-11-amazon-corretto-headless
+       state: present
+      when: java11_check_output.results | selectattr("yumstate", "match", "installed") | list | length == 0
+    - name: check tomcat10 directory is already present or not
+      stat:
+        path: "{{ /opt/apache-tomcat-10.1.34 }}"
+      register: tomcat10_check_output
+     url: https://downloads.apache.org/tomcat/tomcat-10/v10.1.34/bin/apache-tomcat-10.1.34.tar.gz
+       dest: /opt
+       mode: '0755'
+      when: not tomcat10_check_output.stat.exists
+    - name: extracts apache tomcat10 tar
+      unarchive:
+        src: /opt/apache-tomcat-10.1.34.tar.gz
+        dest: /opt
+        remote_src: yes
+    - name: create tomcat10 user
+      user:
+        name: tomcat10
+    - name: change ownership from root to tomcat10 user for apache tomcat10 directory
+      file:
+        path: /opt/apache-tomcat-10.1.34
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
+        state: directory
+        recurse: yes
+        mode: '0755'
+
+- vi tomcat.10.servive_file
+
+-----------------servive file ------------------------
+
+[Unit]
+Description=Apache Tomcat Web Application Container
+After=syslog.target network.target
+
+[Service]
+Type=forking
+
+Environment=JAVA_HOME=/usr/lib/jvm/java-11-amazon-corretto.x86_64/jre
+Environment=CATALINA_PID={{ tomcat_directory }}/apache-tomcat-10.1.34/temp/tomcat.pid
+Environment=CATALINA_HOME={{ tomcat_directory }}/apache-tomcat-10.1.34
+Environment=CATALINA_BASE={{ tomcat_directory }}/apache-tomcat-10.1.34
+Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'
+Environment='JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
+ExecStart="{{ tomcat_directory }}/apache-tomcat-10.1.34/bin/startup.sh"
+ExecStop=/bin/kill -15 $MAINPID
+
+User=tomcat10
+Group=tomcat10
+
+[Install]
+WantedBy=multi-user.target
+------------------------------------------------------------------------------------------
+- cd /etc/systemd/
+
+  
+  
+
+	 
+   
+
+-------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+~
+
